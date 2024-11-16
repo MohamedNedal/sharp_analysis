@@ -1,2 +1,2 @@
-# sharp_analysis
-Analysing SHARP parameters and inspecting the correlation between keywords and geomagnetic parameters.
+# MagStorm
+Analyzing the correlation between the SHARP parameters and the solar and geomagnetic activity.
