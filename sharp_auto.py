@@ -117,7 +117,95 @@ for event_index in range(len(df_table)):
     print(f'SHARP dataset: {data_type}\n')
     print('==============================================================')
 
+raise SystemExit('Stop mark reached!')
 
+# ==============================================================
+
+sharp_starttime = pd.to_datetime(f'{start_year}.{start_month}.{start_day} {start_hour}:{start_minute}')
+
+# add a time offset to get full SHARP timeseries data that covers the flare end time
+sharp_endtime   = pd.to_datetime(f'{end_year}.{end_month}.{end_day} {end_hour}:{end_minute}') + timedelta(hours=2)
+
+print(f'Data type: {data_type}')
+print(f'SHARP start time: {sharp_starttime}')
+print(f'SHARP end time: {sharp_endtime}')
+print(f'AR No.: {noaa_ar}')
+
+keys = c.query(f'{data_type}[][{sharp_starttime} - {sharp_endtime}][? NOAA_ARS ~ "{noaa_ar}" ?]',
+                      key='T_REC, HARPNUM, NOAA_ARS, USFLUX, MEANGAM, MEANGBT, MEANGBZ, MEANGBH, MEANJZD, TOTUSJZ,\
+                        MEANALP, MEANJZH, TOTUSJH, ABSNJZH, SAVNCPP, MEANPOT, TOTPOT, MEANSHR, R_VALUE')
+if len(keys) == 0:
+    print('No SHARP data found!')
+else:
+    print(f'SHARP data found! --> length: {len(keys)}')
+
+t_rec = np.array([parse_tai_string(keys.T_REC[i], datetime_obj=True) for i in range(keys.T_REC.size)])
+
+
+# Plot the choosen SHARP parameters in a for loop
+chosen_parameters = {
+    'USFLUX': 'USFLUX\n[Mx]',
+    'MEANGAM': 'MEANGAM\n[degrees]',
+    'MEANGBT': 'MEANGBT\n[G/Mm]',
+    'MEANALP': 'MEANALP\n[1/Mm]',
+    'MEANPOT': 'MEANPOT\n[Ergs/cm$^3$]',
+    'TOTPOT': 'TOTPOT\n[Ergs/cm$^3$]',
+    'MEANSHR': 'MEANSHR\n[degrees]',
+    'R_VALUE': 'R_VALUE\n[Mx]',
+    'MEANGBZ': 'MEANGBZ\n[G/Mm]',
+    'MEANGBH': 'MEANGBH\n[G/Mm]',
+    'MEANJZD': 'MEANJZD\n[mA/m$^2$]',
+    'TOTUSJZ': 'TOTUSJZ\n[A]',
+    'MEANJZH': 'MEANJZH\n[G$^2$/m]',
+    'TOTUSJH': 'TOTUSJH\n[G$^2$/m]',
+    'ABSNJZH': 'ABSNJZH\n[G$^2$/m]',
+    'SAVNCPP': 'SAVNCPP\n[A]'
+}
+
+flare_peak_moment = pd.to_datetime(f"{flare_onset_datetime.date()} {df_table['Flare_peak'][event_index]}")
+flare_end_moment  = pd.to_datetime(f"{flare_onset_datetime.date()} {df_table['Flare_end'][event_index]}")
+
+if flare_peak_moment < flare_onset_datetime:
+    flare_peak_moment += timedelta(days=1)
+
+if flare_end_moment < flare_peak_moment or flare_end_moment < flare_onset_datetime:
+    flare_end_moment += timedelta(days=1)
+
+print(f'Flare onset: {flare_onset_datetime}')
+print(f'Flare peak: {flare_peak_moment}')
+print(f'Flare end: {flare_end_moment}')
+
+dt_rise = (flare_peak_moment - flare_onset_datetime).total_seconds()/60
+dt_dec  = (flare_end_moment - flare_peak_moment).total_seconds()/60
+
+print(f'\nFlare rise time: {dt_rise} min.')
+print(f'Flare decend time: {dt_dec} min.')
+
+fig = plt.figure(figsize=[15,30])
+
+for i, (col, unit) in enumerate(chosen_parameters.items()):
+    ax = fig.add_subplot(len(chosen_parameters), 1, i+1)
+    ax.plot(t_rec, keys[col], 'o-')
+    ax.axvline(x=flare_onset_datetime, color='g', linestyle='--', label='Flare onset')
+    ax.axvline(x=flare_peak_moment, color='r', linestyle='--', label='Flare peak')
+    ax.axvline(x=flare_end_moment, color='b', linestyle='--', label='Flare end')
+    ax.set_ylabel(unit)
+    ax.xaxis_date()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y/%m/%d %H:%M'))
+    ax.set_xlim(left=t_rec[0], right=t_rec[-1])
+    
+    if i == 0:
+        ax.legend(loc='best', ncol=3)
+        ax.set_xticklabels([])
+    elif i != len(chosen_parameters) - 1:
+        ax.set_xticklabels([])
+    else:
+        ax.set_xlabel('Time (UT)')
+
+fig.tight_layout()
+fig.savefig(f'./data/pdf/{str(flare_onset_datetime.date())}.pdf', format='pdf', bbox_inches='tight')
+fig.savefig(f'./data/png/{str(flare_onset_datetime.date())}.png', format='png', dpi=300, bbox_inches='tight')
+plt.show()
 
 
 
