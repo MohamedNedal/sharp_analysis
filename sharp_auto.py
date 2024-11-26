@@ -248,7 +248,7 @@ with tqdm(total=len(df_flares), desc=f'Loading events info ...') as pbar:
                     ax.set_xlabel('Time (UT)')
             fig.tight_layout()
             fig.savefig(f'./output/png/{str(flare_onset_datetime.date())}.png', format='png', dpi=100, bbox_inches='tight')
-            plt.show()
+            plt.close()
 
             # raise SystemExit('Stop mark reached!')
 
@@ -304,7 +304,7 @@ with tqdm(total=len(df_flares), desc=f'Loading events info ...') as pbar:
             combined_row_0 = pd.concat([series1, series2_0])
 
             # Add the combined row to the final DataFrame
-            df_final_0.loc[index] = combined_row_0
+            df_final_0.loc[event_index] = combined_row_0
             # export the dataframe
             df_final_0.to_csv('./output/csv/df_final_0.csv')
 
@@ -316,7 +316,7 @@ with tqdm(total=len(df_flares), desc=f'Loading events info ...') as pbar:
             # Combine the two rows from the two Dataframes
             combined_row_rise = pd.concat([series1, series2_rise])
             # Add the combined row to the final DataFrame
-            df_final_rise.loc[index] = combined_row_rise
+            df_final_rise.loc[event_index] = combined_row_rise
             # export the dataframe
             df_final_rise.to_csv('./output/csv/df_final_rise.csv')
 
@@ -328,7 +328,7 @@ with tqdm(total=len(df_flares), desc=f'Loading events info ...') as pbar:
             # Combine the two rows from the two Dataframes
             combined_row_dec = pd.concat([series1, series2_dec])
             # Add the combined row to the final DataFrame
-            df_final_dec.loc[index] = combined_row_dec
+            df_final_dec.loc[event_index] = combined_row_dec
             # export the dataframe
             df_final_dec.to_csv('./output/csv/df_final_dec.csv')
 
@@ -340,7 +340,7 @@ with tqdm(total=len(df_flares), desc=f'Loading events info ...') as pbar:
             # Combine the two rows from the two Dataframes
             combined_row_all = pd.concat([series1, series2_all])
             # Add the combined row to the final DataFrame
-            df_final_all.loc[index] = combined_row_all
+            df_final_all.loc[event_index] = combined_row_all
             # export the dataframe
             df_final_all.to_csv('./output/csv/df_final_all.csv')
 
@@ -350,6 +350,14 @@ with tqdm(total=len(df_flares), desc=f'Loading events info ...') as pbar:
 
 
 
+# Exporting events indices to a binary file
+np.save('./output/events_with_sharp_data.npy', np.array(event_indices_with_sharp_data))
+np.save('./output/events_without_sharp_data.npy', np.array(event_indices_without_sharp_data))
+print('Arrays of indices exported')
+
+# # Loading the binary file back
+# loaded_data = np.load('./test.npy')
+# print('Loaded data:', loaded_data)
 
 
 raise SystemExit('Stop mark reached!')
@@ -370,12 +378,5 @@ df_final_all.drop(['NOAA_ARS','lat','long','AR number','AR location','AR same da
 
 
 
-# Exporting events indices to a binary file
-np.save('./output/events_with_sharp_data.npy', np.array(event_indices_with_sharp_data))
-np.save('./output/events_without_sharp_data.npy', np.array(event_indices_without_sharp_data))
-print('Arrays of indices exported')
 
-# # Loading the binary file back
-# loaded_data = np.load('./test.npy')
-# print('Loaded data:', loaded_data)
 
